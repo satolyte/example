@@ -1,0 +1,86 @@
+<html>
+
+<head><title>CS51 Spell Checker</title></head>
+
+<body style="width: 1000px">
+
+<h1>CS51 Final Project Write-up: Spell Check</h1>
+
+Molly Yang, Jose Castillo, Shannon Lytle, Alex Chen 
+
+<h2> <a href = "http://youtu.be/goREDSSsTCs"> Link to video </a> </h2>
+
+<h2>Instructions for running code:</h2>
+
+Initial: If the file trie.pkl doesn't exist, run ./scrape.py to build the initial dictionary.
+
+<h3>Autocorrect:</h3>
+./acorrect.py "string to correct"<br/>
+Function searches trie dictionary for words within specified Levenshtein distance (2) and returns the most probable option using Bayes' theorem. 
+
+<h3>Autocomplete:</h3>
+./acomplete.py "string to complete"<br/>
+Searches trie dictionary for other prefixes within specified Levenshtein distance (1) and returns the most probable descendant using Bayes' theorem.
+
+<h3>Autocomplete interactive:</h3>
+./interface.py<br/>
+Type in the first Entry box. As you type, suggestions should appear and update in the bottom Entry box. After words are completed, i.e. space bar is hit, the bottom box should reflect words that have already been entered and change focus to the newest prefix in the user query. 
+
+<h3>Add words to dictionary:</h3>
+./add.py "string to add"</br>
+This function loads the current dictionary from the pickle, modifies it, deletes the old pickle, and creates a new pickle. 
+
+<h2>Overview</h2>
+We implemented a spell checker product. This product can call autocorrect on inputs (giving a suggestion for the most probable/correct word) as well as autocomplete (giving a suggestion based on a partially inputted word; has interactive potential for users inputting queries in real time). 
+
+<h3>Trie</h3>
+Our product uses a trie for its data structure. It is composed of connected nodes that contain a letter, a counter of that word (if it is one) and a bool isWord that keeps track of whether is is a word. The trie class contains pertinent functions like insert (for inserting words), isMember, which checks if the word exists in the dictionary, and setFreq (which sets the frequency of a given word or partial word). 
+
+<h3>Scraper</h3>
+The scraper takes a text (big.txt, which contains a compilation of English novels from the Gutenberg project) and creates a trie dictionary by adding the words and updating the counter for how many times they appear. With this dictionary, the scraper creates a pickle (Python way of storing data) so that the dictionary doesn't need to be re-created everytime acorrect or acomplete is called.
+
+<h3>Autocorrect</h3>
+Autocorrect takes a word and gives the most probable word it could be. First, it calculates possible edits of the word using Levenshtein distance by traversing the tree. This is efficient because the data structure is simultaneously traversed as the edits are determined, as opposed to a separate calculation of edits and traversal of the data structure, as previously implemented through hash tables. If these edits are found to be true words, they are added to a return list as a tuple containing (word, probability, counter, and edit distance.) The probability is calculated using Bayes' theorem, which essentially favors words with a smaller edit distance. (A factor of edit distance is multiplied by the counter). mostProbable is then called on this list, which sorts the list from biggest to smallest by the second argument of the tuple (probability) and then returns the head of the list, giving the most probably word.
+
+<h3>Autocomplete</h3>
+Autocomplete returns suggestions given partial word queries. Given a query, autocomplete computes a set of active nodes that comprise prefixes within a certain Levenshtein distance of the query. It then returns the most probable descendant of these active nodes, probability being calculated through Bayes' with a statistical language model derived from the corpus (here, big.txt) and a rudimentary error model that privileges descendants of prefixes with smaller edit distances from the query. Given an interactive prompt, autocomplete has the capability to compute active nodes with a cached, node-filtering strategy, where the set of nodes from the last query are filtered and used to compute the set of nodes for the new query, which is one character longer. This reduces runtime per-character, which is optimal for an interactive prompt and allows the user to see suggestions as they type. 
+<a href="http://www.ics.uci.edu/~chenli/pub/www2009-tastier-fuzzy.pdf">Fuzzy Search </a> - source for interactive theorem <br/><br/>
+
+<h3>Adding Words</h3>
+add.py takes a user input as the argument. It loads the dictionary from the pickle, adds the word to the dictionary with a frequency of 10 (it is assumed that if a word is being added, it is being used favorably by the user), deletes the old pickle, and recreates the pickle from the new dictionary. The pickle needs to be re-created because the file itself cannot be modified, it can only be read or written.
+
+<h3>Results</h3>
+Results will differ depending on the txt file that was scraped. The current one used is a compilation of old English novels, so the return words may not match up with the expectation of current English patterns.
+
+<h2>Planning</h2>
+Here are the original specs.<br/></br/>
+<a href="report/cs51projectdraftspec.pdf">Preliminary Draft Spec</a><br/>
+<a href="report/cs51finalspec.pdf">Final Preliminary Specification</a><br/>
+<a href="report/cs51checkpoint1.pdf">Checkpoint 1</a><br/>
+<a href="report/cs51checkpoint2.pdf">Checkpoint 2</a><br/><br/>
+Each milestone went according to plan and the group generally sticked to the agreed schedule. 
+
+<h2>Design and Implementation</h2>
+Our experience with implementing this product is as follows. <br /><br/>
+
+In the trie data structure, it was decided that a node class should be abstracted from the trie class so that the implementation of the node could be modified as needed (i.e. what information was needed in each node) without affecting the structure of the trie. Some of the functions within the trie class needed to be modified along the way. For example, when function setFreq was originally called on a word, it updated the counter at every single node, which caused the scraper to add partial words to the trie. <br /><br/>
+
+A pickle of the dictionary implemented late in the cycle significantly speeded up the program running time. Previously, every time autocorrect and autocomplete were called, the dictionary needed to be rebuilt because the trie data structure was not stored. With the pickle, the data structure was saved in a file called trie.pkl.<br/></br/>
+
+<h2>Reflection</h2>
+The group worked pretty well. Molly was instrumental in planning the group logistics and keeping the group moving along (her reminder emails were very helpful). Overall, the group members did what was expected of them. Jose implemented the data structure, Shannon implemented the scraper, Bayes' theorem, and the pickling of the dictionary, Molly implemented autocorrect with Levenshtein distance, and Alex implemented autocomplete with prefix filtering and interactive fuzzy search. Members completed their parts of the project by the deadlines. <br/><br/>
+
+We believe that we implemented these spell check programs in a new and exciting way. First, the trie structure allows for efficient transversal. Second, we implemented Levenshtein distance to take advantage of this trie structure, which allows for faster calculation of possible words than previously implemented. <br/><br/>
+
+If there was more time, we would have liked to implemented a more visually pleasing interface, as well as worked with optimizations of the program, potentially tweaking the data structure to make the pickle smaller in size. Possible optimizations also include using a trie implementation that’s not pure Python that may be faster, e.g. python-CharTrie or another C/C++ implementation with a Python wrapper.  A more accurate and research-based error model based on either machine learning or existing statistical language analyses would be an interesting next step to take to make our autocorrect/autocomplete more useful and accurate. <br/><br/>
+
+We were pleasantly surprised by how easy Python was to use, as well as how many built-in functions it has. It took much fewer lines of code to implement what we needed to than expected.<br/><br/>
+
+If we did this project again, we would all take time to learn the nuances and details of git usage. Git wasn’t used in a maximally effective manner (i.e. branches beside the master were not created) so we occasionally ran into issues with merging that wasted precious time.  We would also communicate in person more often, because reading and understanding each other's code remotely took a significant amount of time that could’ve been reduced. <br/><br/>
+
+Our original planning was good. We managed to complete all of our functionality, our additional extensions, and even one of our cool extensions (adding words). We didn't venture too far from our original plan, only in small details of the implementation. <br/><br/>
+
+Important things we learned in this project: we all learned how to code in Python (new language). We were also pleased that we were able to take some functional ways of thinking we learned in CS51 (i.e. abstraction) to apply to a more object-oriented project.<br/><br/>
+
+</body>
+</html>
